@@ -147,6 +147,10 @@ namespace {
     ImFont *g_FontStandard_Medium;
     ImFont *g_FontStandard_MediumLarge;
     ImFont *g_FontStandard_Large;
+    ImFont *g_FontTexta_Bold_Small;
+    ImFont *g_FontTexta_Bold_Medium;
+    ImFont *g_FontTexta_Bold_MediumLarge;
+    ImFont *g_FontTexta_Bold_Large;
     ImFont *g_FontExtended_Small;
     ImFont *g_FontExtended_Medium;
     ImFont *g_FontExtended_MediumLarge;
@@ -674,7 +678,40 @@ struct Element {
                 float draw_font_size;
                 u32 text_width;
                 u32 text_height;
-                ProcessText(this->el_text.text, static_cast<ul::design::FontSize>(this->el_text.font_size), text_width, text_height, draw_font, draw_font_size);
+                if(this->ui_name == "time_text" || this->ui_name == "date_text" || this->ui_name == "battery_text") {
+                    switch(static_cast<ul::design::FontSize>(this->el_text.font_size)) {
+                        case ul::design::FontSize::Small:
+                            draw_font = g_FontTexta_Bold_Small;
+                            draw_font_size = ul::design::FontSizeSmall;
+                            break;
+                        case ul::design::FontSize::Medium:
+                            draw_font = g_FontTexta_Bold_Medium;
+                            draw_font_size = ul::design::FontSizeMedium;
+                            break;
+                        case ul::design::FontSize::MediumLarge:
+                            draw_font = g_FontTexta_Bold_MediumLarge;
+                            draw_font_size = ul::design::FontSizeMediumLarge;
+                            break;
+                        case ul::design::FontSize::Large:
+                            draw_font = g_FontTexta_Bold_Large;
+                            draw_font_size = ul::design::FontSizeLarge;
+                            break;
+                        default:
+                            draw_font = g_FontTexta_Bold_Medium;
+                            draw_font_size = ul::design::FontSizeMedium;
+                            break;
+                    }
+
+                    ImGui::PushFont(draw_font);
+                    const auto text_size = ImGui::CalcTextSize(this->el_text.text.c_str());
+                    ImGui::PopFont();
+
+                    text_width = (u32)text_size.x;
+                    text_height = (u32)text_size.y;
+                }
+                else {
+                    ProcessText(this->el_text.text, static_cast<ul::design::FontSize>(this->el_text.font_size), text_width, text_height, draw_font, draw_font_size);
+                }
 
                 const auto draw_x = this->GetDrawX(text_width);
                 const auto draw_y = this->GetDrawY(text_height);
@@ -812,7 +849,7 @@ Element elem_main_connection_2_top_icon(ul::design::MenuType::Main, ul::design::
 Element elem_main_connection_3_top_icon(ul::design::MenuType::Main, ul::design::ElementType::Image, "connection_top_icon", ElementLoadContext::ForAssetImage("ui/Main/TopIcon/Connection/3"));
 
 Element elem_main_time_text(ul::design::MenuType::Main, ul::design::ElementType::Text, "time_text", ElementLoadContext::ForText("04:20"));
-Element elem_main_date_text(ul::design::MenuType::Main, ul::design::ElementType::Text, "date_text", ElementLoadContext::ForText("15/06 (Sat)"));
+Element elem_main_date_text(ul::design::MenuType::Main, ul::design::ElementType::Text, "date_text", ElementLoadContext::ForText("15/06"));
 Element elem_main_battery_text(ul::design::MenuType::Main, ul::design::ElementType::Text, "battery_text", ElementLoadContext::ForText("69%"));
 
 Element elem_main_battery_10_top_icon(ul::design::MenuType::Main, ul::design::ElementType::Image, "battery_top_icon", ElementLoadContext::ForAssetImage("ui/Main/TopIcon/Battery/10"));
@@ -1162,6 +1199,11 @@ constexpr ImWchar ExtendedGlyphRanges[] = {
 
 void ReloadFonts() {
     auto &io = ImGui::GetIO();
+
+    g_FontTexta_Bold_Small = io.Fonts->AddFontFromFileTTF("assets/TextaBold.ttf", ul::design::FontSizeSmall * g_Scale, nullptr, StandardGlyphRanges);
+    g_FontTexta_Bold_Medium = io.Fonts->AddFontFromFileTTF("assets/TextaBold.ttf", ul::design::FontSizeMedium * g_Scale, nullptr, StandardGlyphRanges);
+    g_FontTexta_Bold_MediumLarge = io.Fonts->AddFontFromFileTTF("assets/TextaBold.ttf", ul::design::FontSizeMediumLarge * g_Scale, nullptr, StandardGlyphRanges);
+    g_FontTexta_Bold_Large = io.Fonts->AddFontFromFileTTF("assets/TextaBold.ttf", ul::design::FontSizeLarge * g_Scale, nullptr, StandardGlyphRanges);
 
     #define _LOAD_ASSET_FONT_FOR_SIZE(name, size) { \
         ImFontConfig config; \
@@ -1696,7 +1738,7 @@ namespace {
             }
             switch(elem->type) {
                 case ul::design::ElementType::Image: {
-                    if(!elem->ImageIsBuiltin()) {
+                    if(!elem->ImageIsBuiltin() || (elem->ui_name == "logo_top_icon")) {
                         if(ImGui::Button(("Change image##" + id_name).c_str())) {
                             LoadElementImage(elem);
                         }
@@ -1828,7 +1870,12 @@ namespace {
 
             _NEXT_ROW();
 
-            _DRAW_ICON(elem_main_folder_entry_icon);
+            { \
+                const auto elem_main_folder_entry_icon_x = entry_menu_base_x; \
+                const auto elem_main_folder_entry_icon_y = entry_menu_base_y; \
+                elem_main_folder_entry_icon.DrawOnWindowAt(elem_main_folder_entry_icon_x * g_MenuEntryScale, elem_main_folder_entry_icon_y * g_MenuEntryScale, ul::design::EntryMenuEntryIconSize * g_MenuEntryScale, ul::design::EntryMenuEntryIconSize * g_MenuEntryScale); \
+                entry_menu_base_x += elem_main_folder_entry_icon.el_img.width + (ul::design::EntryMenuEntryMargin / g_MenuEntryScale); \
+            }
             _DRAW_ICON_WITH_OVER(elem_main_album_entry_icon, elem_main_suspended_over_icon);
             _DRAW_ICON_WITH_OVER(elem_main_default_app_entry_icon, elem_main_hb_takeover_app_over_icon);
             _DRAW_EMPTY_ICON();
@@ -2745,6 +2792,10 @@ namespace {
         auto &io = ImGui::GetIO();
 
         io.Fonts->AddFontDefault();
+        g_FontTexta_Bold_Small = io.Fonts->AddFontFromFileTTF("assets/TextaBold.ttf", ul::design::FontSizeSmall * g_Scale, nullptr, StandardGlyphRanges);
+        g_FontTexta_Bold_Medium = io.Fonts->AddFontFromFileTTF("assets/TextaBold.ttf", ul::design::FontSizeMedium * g_Scale, nullptr, StandardGlyphRanges);
+        g_FontTexta_Bold_MediumLarge = io.Fonts->AddFontFromFileTTF("assets/TextaBold.ttf", ul::design::FontSizeMediumLarge * g_Scale, nullptr, StandardGlyphRanges);
+        g_FontTexta_Bold_Large = io.Fonts->AddFontFromFileTTF("assets/TextaBold.ttf", ul::design::FontSizeLarge * g_Scale, nullptr, StandardGlyphRanges);
 
         #define _LOAD_BUILTIN_FONT_FOR_SIZE(name, size) { \
             ImFontConfig config; \
