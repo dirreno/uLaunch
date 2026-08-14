@@ -1181,7 +1181,19 @@ SoundFile *g_AllSoundFiles[] = {
 };
 
 extern "C" EMSCRIPTEN_KEEPALIVE void cpp_LoadElementImage(Element *elem, void *img_data, const size_t img_data_size) {
+    // Preserve user-modified position and alignment settings
+    const auto saved_x = elem->x;
+    const auto saved_y = elem->y;
+    const auto saved_h_align = elem->h_align;
+    const auto saved_v_align = elem->v_align;
+    
     elem->Reload(ElementLoadContext::ForRawImage(img_data, img_data_size));
+    
+    // Restore the preserved settings after reload
+    elem->x = saved_x;
+    elem->y = saved_y;
+    elem->h_align = saved_h_align;
+    elem->v_align = saved_v_align;
 }
 
 EM_JS(void, LoadElementImage, (Element *elem), {
@@ -2478,6 +2490,8 @@ namespace {
                         }
                     }
 
+                    LoadEditableElement(&elem_main_battery_top_icon_charging);
+
                     LoadEditableElement(&elem_main_input_bar_bg);
 
                     LoadEditableElement(&elem_main_cur_path_text);
@@ -2762,6 +2776,8 @@ namespace {
                             break;
                         }
                     }
+
+                    LoadEditableElement(&elem_lockscreen_battery_top_icon_charging);
                     
                     ImGui::Unindent();
                 }
