@@ -635,25 +635,49 @@ struct Element {
     }
 
     inline u32 GetDrawX(const u32 width) {
-        auto draw_x = this->x;
-        if(static_cast<ul::design::HorizontalAlign>(this->h_align) == ul::design::HorizontalAlign::Center) {
-            draw_x = (ul::design::ScreenWidth - width) / 2;
+        int draw_x;
+        switch(static_cast<ul::design::HorizontalAlign>(this->h_align)) {
+            case ul::design::HorizontalAlign::Left:
+                draw_x = this->x;
+                break;
+            case ul::design::HorizontalAlign::Center:
+                draw_x = static_cast<int>((ul::design::ScreenWidth - width) / 2) + this->x;
+                break;
+            case ul::design::HorizontalAlign::Right:
+                draw_x = static_cast<int>(ul::design::ScreenWidth - width) - this->x;
+                break;
+            default:
+                draw_x = this->x;
+                break;
         }
-        else if(static_cast<ul::design::HorizontalAlign>(this->h_align) == ul::design::HorizontalAlign::Right) {
-            draw_x = ul::design::ScreenWidth - width;
+
+        if(draw_x < 0) {
+            draw_x = 0;
         }
-        return draw_x;
+        return static_cast<u32>(draw_x);
     }
 
     inline u32 GetDrawY(const u32 height) {
-        auto draw_y = this->y;
-        if(static_cast<ul::design::VerticalAlign>(this->v_align) == ul::design::VerticalAlign::Center) {
-            draw_y = (ul::design::ScreenHeight - height) / 2;
+        int draw_y;
+        switch(static_cast<ul::design::VerticalAlign>(this->v_align)) {
+            case ul::design::VerticalAlign::Top:
+                draw_y = this->y;
+                break;
+            case ul::design::VerticalAlign::Center:
+                draw_y = static_cast<int>((ul::design::ScreenHeight - height) / 2) + this->y;
+                break;
+            case ul::design::VerticalAlign::Bottom:
+                draw_y = static_cast<int>(ul::design::ScreenHeight - height) - this->y;
+                break;
+            default:
+                draw_y = this->y;
+                break;
         }
-        else if(static_cast<ul::design::VerticalAlign>(this->v_align) == ul::design::VerticalAlign::Bottom) {
-            draw_y = ul::design::ScreenHeight - height;
+
+        if(draw_y < 0) {
+            draw_y = 0;
         }
-        return draw_y;
+        return static_cast<u32>(draw_y);
     }
 
     inline void DrawOnWindow() {
